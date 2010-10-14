@@ -18,6 +18,7 @@ package com.zegoggles.smssync;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.MergeCursor;
 import android.database.MatrixCursor;
 import android.os.Process;
 import android.util.Log;
@@ -220,7 +221,7 @@ public class SmsBackupService extends ServiceBase {
           }
 
           while (!sCanceled && (sCurrentSyncedItems < sItemsToSync)) {
-            publish(BACKUP);
+              publish(BACKUP);
 
               long smsDate = -1, mmsDate = -1;
               Cursor curCursor;
@@ -276,16 +277,23 @@ public class SmsBackupService extends ServiceBase {
        * <code>date &lt; {@link #getMaxSyncedDateSms()}</code> which are not drafts.
        */
       private Cursor getSmsItemsToSync(int max) {
-         if (LOCAL_LOGV) {
+          if (LOCAL_LOGV) {
             Log.v(TAG, String.format("getSmsItemToSync(max=%d),  maxSyncedDate=%d", max, getMaxSyncedDateSms()));
-         }
-         String sortOrder = SmsConsts.DATE;
+          }
+          String sortOrder = SmsConsts.DATE;
           if (max > 0) sortOrder += " LIMIT " + max;
 
-          return getContentResolver().query(SMS_PROVIDER, null,
-                String.format("%s > ? AND %s <> ?", SmsConsts.DATE, SmsConsts.TYPE),
+          final Cursor c1 = getContentResolver().query(SMS_OUTBOX, null,
+                String.format("%s >= ? AND %s <> ?", SmsConsts.DATE, SmsConsts.TYPE),
                 new String[] { String.valueOf(getMaxSyncedDateSms()), String.valueOf(SmsConsts.MESSAGE_TYPE_DRAFT) },
                 sortOrder);
+
+          final Cursor c2 = getContentResolver().query(SMS_INBOX, null,
+                String.format("%s >= ? AND %s <> ?", SmsConsts.DATE, SmsConsts.TYPE),
+                new String[] { String.valueOf(getMaxSyncedDateSms()), String.valueOf(SmsConsts.MESSAGE_TYPE_DRAFT) },
+                sortOrder);
+
+          return new MergeCursor(new Cursor[] { c1, c2 });
       }
 
       /**
@@ -307,7 +315,7 @@ public class SmsBackupService extends ServiceBase {
             sortOrder += " LIMIT " + max;
           }
           return getContentResolver().query(MMS_PROVIDER, null,
-                String.format("%s > ?", SmsConsts.DATE),
+                String.format("%s >= ?", SmsConsts.DATE),
                 new String[] { String.valueOf(getMaxSyncedDateMms()) },
                 sortOrder);
       }

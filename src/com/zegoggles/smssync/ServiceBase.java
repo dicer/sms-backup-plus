@@ -40,6 +40,8 @@ public abstract class ServiceBase extends Service {
     public static SmsSyncState getState() { return sState; }
 
     public static final Uri SMS_PROVIDER = Uri.parse("content://sms");
+    public static final Uri SMS_INBOX    = Uri.parse("content://sms/inbox");
+    public static final Uri SMS_OUTBOX   = Uri.parse("content://sms/outbox");
     public static final Uri MMS_PROVIDER = Uri.parse("content://mms");
 
     /**

@@ -167,6 +167,14 @@ public class SmsRestoreService extends ServiceBase {
                 if (type != null && (type == SmsConsts.MESSAGE_TYPE_INBOX ||
                                      type == SmsConsts.MESSAGE_TYPE_SENT) &&
                                      !smsExists(values)) {
+
+                    //should really thread as this point -
+                    //need to duplicate android.provider.Telephony.Threads impl
+                    //here:
+                    //
+                    //int threadId = Threads.getOrCreateThreadId(context, values.get(SmsConsts.ADDRESS));
+                    //values.puts(SmsConsts.THREAD_ID, threadId);
+
                     Uri uri = getContentResolver().insert(SMS_PROVIDER, values);
                     if (uri != null) {
                       insertedIds.add(uri.getLastPathSegment());
